@@ -175,11 +175,13 @@ class MemberRepositoryTest {
 
         //when
         Page<Member> page = memberRepository.findByAge(age, pageRequest);
-
+        
+        //엔티티가 아닌 DTO로 변환해서 반환시키는 방법!!!
         Page<MemberDto> toMap = page.map(m -> new MemberDto(m.getId(), m.getUsername(), null));
 
         //then
         List<Member> content = page.getContent();
+        long totalElements = page.getTotalElements();
 
         assertThat(content.size()).isEqualTo(3);
         assertThat(page.getTotalElements()).isEqualTo(5);
@@ -200,8 +202,6 @@ class MemberRepositoryTest {
 
         //when
         int resultCount = memberRepository.bulkAgePlus(20);
-//        em.flush();
-//        em.clear();
 
         List<Member> result = memberRepository.findByUsername("member5");
         Member member5 = result.get(0);
@@ -234,5 +234,35 @@ class MemberRepositoryTest {
             System.out.println("member.teamClass = " + member.getTeam().getClass());
             System.out.println("member.team = " + member.getTeam().getName());
         }
+    }
+
+    @Test
+    public void queryHint() {
+        //given
+        Member member1 = memberRepository.save(new Member("member1", 10));
+        em.flush();
+        em.clear();
+
+        //when
+        Member findMember = memberRepository.findReadOnlyByUsername("member1");
+        findMember.setUsername("member2");
+
+        em.flush();
+    }
+
+    @Test
+    public void lock() {
+        //given
+        Member member1 = memberRepository.save(new Member("member1", 10));
+        em.flush();
+        em.clear();
+
+        //when
+        List<Member> result = memberRepository.findLockByUsername("member1");
+    }
+
+    @Test
+    public void callCustom() {
+        List<Member> result = memberRepository.findMemberCustom();
     }
 }
